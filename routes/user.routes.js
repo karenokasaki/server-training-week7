@@ -1,25 +1,77 @@
 import express from "express";
 import { v4 as uuidv4 } from "uuid";
+import UserModel from "../model/user.model.js";
 
 const userRoute = express.Router();
 
-//banco de dados que usaremos de exemplo
-const db = [
-  {
-    id: uuidv4(),
-    user: "karen",
-    age: 29,
-    role: "professora",
-    active: true,
-    endereco: {
-      cidade: "ribas do rio pardo",
-      estado: "MS",
-    },
-    tarefas: ["fazer a próxima aula", "atualizar portal"],
-  },
-];
+userRoute.post("/create-user", async (req, res) => {
+  try {
+    const newUser = await UserModel.create(req.body);
 
-// ITERAÇÃO 1
+    return res.status(201).json(newUser);
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ msg: "Algo de errado não está certo" });
+  }
+});
+
+userRoute.get("/all-users", async (req, res) => {
+  try {
+    const users = await UserModel.find();
+
+    return res.status(200).json(users);
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ msg: "Algo de errado não está certo" });
+  }
+});
+
+userRoute.get("/oneUser/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const oneUser = await UserModel.findById(id);
+
+    return res.status(200).json(oneUser);
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ msg: "Algo de errado não está certo" });
+  }
+});
+
+userRoute.delete("/delete/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const deletedUser = await UserModel.findByIdAndDelete(id);
+
+    return res.status(200).json(deletedUser);
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ msg: "Algo de errado não está certo" });
+  }
+});
+
+userRoute.put("/edit/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const updatedUser = await UserModel.findByIdAndUpdate(
+      id,
+      { ...req.body },
+      { new: true, runValidators: true }
+    );
+
+    return res.status(200).json(updatedUser);
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ msg: "Algo de errado não está certo" });
+  }
+});
+
+
+/*
+ // ROTAS ANTIGAS
 //criação das rotas
 userRoute.get("/all-users", (req, res) => {
   console.log(req.url);
@@ -93,6 +145,6 @@ userRoute.put("/addTarefa/:id", (req, res) => {
   const update = db[index].tarefas.push(tarefa);
 
   return res.status(201).json(update);
-});
+}); */
 
 export default userRoute;
