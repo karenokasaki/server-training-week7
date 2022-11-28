@@ -62,35 +62,29 @@ app.get("/all", (req, res) => {
 });
 
 app.post("/create", (req, res) => {
-  //visualizando o que o client enviou no corpo da requisição
-  console.log(req.body);
-
   let form = { ...req.body, id: uuidv4() };
 
   db.push(form);
 
   return res.status(201).json({
     data: form,
-    message: "Usuário criado!",
+    message: "Processo criado!",
   });
 });
 
-app.get("/:id", (req, res) => {
-  //acessando os parâmetro de busca enviado pelo client
-  //os parametros são iguais os parâmetros de rotas do react. Eles podem ser acessados com descontrução também.
-  // let id = req.params.id  OU
+app.put("/edit/:id", (req, res) => {
   const { id } = req.params;
-  console.log(id);
 
   const user = db.find((user) => user.id === id);
 
-  //caso o user não seja encontrando temos que fazer um if por excessão aqui.
-  //e devolver uma resposta para o client
-  if (!user) {
-    return res.status(404).json({ message: "Usário não encontrado" });
-  }
+  const index = db.indexOf(user);
 
-  return res.status(200).json(user);
+  db[index] = {
+    ...user,
+    ...req.body,
+  };
+
+  return res.status(200).json(db[index]);
 });
 
 app.delete("/deleteUser/:id", (req, res) => {
@@ -106,30 +100,74 @@ app.delete("/deleteUser/:id", (req, res) => {
   return res.status(200).json(db);
 });
 
-app.put("/editUser/:id", (req, res) => {
+// ITERAÇÃO 2
+
+app.get("/process/:id", (req, res) => {
   const { id } = req.params;
 
-  const user = db.find((user) => user.id === id);
+  const process = db.find((process) => process.id === id);
 
-  const index = db.indexOf(user);
+  if (!process) {
+    return res.status(404).json({ message: "Processo não encontrado" });
+  }
 
-  db[index] = {
-    ...user,
-    ...req.body,
-  };
-
-  return res.status(200).json(db[index]);
+  return res.status(200).json(process);
 });
 
-app.put("/addTarefa/:id", (req, res) => {
+app.put("/addComment/:id", (req, res) => {
+  /* 
+    req.body -> {"comment": "algum comentário"}
+  */
   const { id } = req.params;
 
-  const user = db.find((user) => user.id === id);
-  const index = db.indexOf(user);
+  const process = db.find((process) => process.id === id);
+  const index = db.indexOf(process);
 
-  const update = db[index].tarefas.push(req.body.tarefa);
+  const update = db[index].comments.push(req.body.comment);
 
   return res.status(201).json(update);
+});
+
+app.get("/status/open", (req, res) => {
+  const open = db.filter((process) => process.status === "Em andamento");
+
+  if (!open.length) {
+    return res.status(404).json({ msg: "Nenhum processo encontrado" });
+  }
+
+  return res.status(200).json(open);
+});
+
+app.get("/status/close", (req, res) => {
+  const close = db.filter((process) => process.status === "Finalizado");
+
+  if (!close.length) {
+    return res.status(404).json({ msg: "Nenhum processo encontrado" });
+  }
+
+  return res.status(200).json(close);
+});
+
+// BÔNUS
+app.get("/setor/:nomeSetor", (req, res) => {
+  const { nomeSetor } = req.params;
+
+  const setores = db.filter((process) => process.setor === nomeSetor);
+
+  if (!setores.length) {
+    return res.status(404).json({ msg: "Nenhum processo encontrado" });
+  }
+
+  return res.status(200).json(setores);
+});
+
+app.get("/random", (req, res) => {
+  const randomIndex = Math.floor(Math.random() * db.length);
+  console.log(randomIndex);
+
+  const process = db[randomIndex];
+
+  return res.status(200).json(process);
 });
 
 app.listen(process.env.PORT, () => {
